@@ -1,33 +1,40 @@
 const testdata = require('./test-10000.json');
-const count = 60000;
+const count = 10000;
 const classifier = require(`./classifier-${count}.json`);
-const MININT = -1000;
+const MININT = -999999;
 
 let correct = 0;
-let norm = testdata.length;
-let inifs = 0;
-let zeros = 0;
-let nans = 0;
-let mins = 0;
 
 const dd = x => Math.pow(x, 2);
 const sqrt = x => Math.pow(x, 0.5);
 
-const gauss = (mathAvg, dispersion, x) => Math.exp(-dd(x - mathAvg) / 2 / dispersion) / sqrt(2 * Math.PI * dispersion);
-
+// const gauss = (mathAvg, dispersion, x) => Math.exp(-dd(x - mathAvg) / 2 / dispersion) / sqrt(2 * Math.PI * dispersion);
+console.log(Object
+  .keys(classifier)
+  .slice(1));
 testdata.forEach(line => {
   const best = Object
     .keys(classifier)
+    .slice(1)
     .map(key => {
       let index = 0;
 
       const res = line.pixels.reduce((result, p) => {
-        const d = classifier[key][index++];
-        const mathAvg = d.mathAvg;
-        const dispersion = d.dispersion;
+        const dI = classifier[key][index];
+        const mathAvgI = dI.mathAvg;
+        const dispersionI = dI.dispersion;
+
+        const dFooting = classifier[0][index++];
+        const mathAvgFooting = dFooting.mathAvg;
+        const dispersionFooting = dFooting.dispersion;
         // console.log(p, gauss(mathAvg, dispersion, p));
-        return result + gauss(mathAvg, dispersion, p);
-      }, Math.pow(10, 0) * count / 10);
+        // return result + gauss(mathAvg, dispersion, p);
+
+        return result +
+          0.5 * Math.log(dispersionFooting / dispersionI) +
+          dd(p - mathAvgFooting) / 2 / dispersionFooting -
+          dd(p - mathAvgI) / 2 / dispersionI;
+      }, 0);
 
       // console.log(res);
 
@@ -42,32 +49,9 @@ testdata.forEach(line => {
         probability: MININT
       });
   // console.log(best.probability);
-  if (line.label === best.key) {
+  if (line.label === (best.probability > 0 ? best : { key: '0' }).key) {
     correct++;
-  }
-
-  if (best.probability === 0 || best.probability === NaN || best.probability === Infinity || best.probability === -1000) {
-    switch (best.probability) {
-      case 0:
-        zeros++;
-        break;
-      case NaN:
-        nans++;
-        break;
-      case Infinity:
-        inifs++;
-        break;
-      case -1000:
-        mins++;
-        break;
-      default:
-    }
-    norm--;
   }
 });
 
-console.log('mins: ', mins / testdata.length);
-console.log('zeros: ', zeros / testdata.length);
-console.log('nans: ', nans / testdata.length);
-console.log('inifs: ', inifs / testdata.length);
-console.log(correct / testdata.length, norm / testdata.length);
+console.log(correct / testdata.length);

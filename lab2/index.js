@@ -10,20 +10,20 @@ const numbers = Array
       prev, {
         [curr]: Array.apply(null, { length: 784 }).map(() => ({
           mathAvg: 0,
-          dispersion: 100000000
+          dispersion: 23000
         }))
       }),
   {});
 
 dataset.forEach((line) =>
   line.pixels.forEach((p, i) =>
-    numbers[line.label][i].mathAvg += 10 * p / count
+    numbers[line.label][i].mathAvg += p / count
   )
 );
 
 dataset.forEach((line) =>
   line.pixels.forEach((p, i) =>
-    numbers[line.label][i].dispersion += 10 * Math.pow(p - numbers[line.label][i].mathAvg, 2) / count
+    numbers[line.label][i].dispersion += Math.pow(p - numbers[line.label][i].mathAvg, 2) / count
   )
 );
 
